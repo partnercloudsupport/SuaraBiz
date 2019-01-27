@@ -1,0 +1,110 @@
+{
+  "project_info": {
+    "project_number": "287740184490",
+    "firebase_url": "https://suara-rakyat.firebaseio.com",
+    "project_id": "suara-rakyat",
+    "storage_bucket": "suara-rakyat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287740184490:android:121943287a1d57b7",
+        "android_client_info": {
+          "package_name": "biz.eastservices.suara"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "287740184490-e5fnpikemqg1rjvu3lmh6sos909cvbc4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "biz.eastservices.suara",
+            "certificate_hash": "5a075bd99ef2038a4555ee6928560126e61b8b99"
+          }
+        },
+        {
+          "client_id": "287740184490-fs98b65eqfc4tdopsauhfrgcqe8tdt5b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "biz.eastservices.suara",
+            "certificate_hash": "7eb7f2de55df92cb8db83f837bdb7bd4e05523da"
+          }
+        },
+        {
+          "client_id": "287740184490-ejmpcfdvgose0v6n2telv28blp8mlbg4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "biz.eastservices.suara",
+            "certificate_hash": "dc80ad1dee9e5b1699c4d3e27549a9b920a417b5"
+          }
+        },
+        {
+          "client_id": "287740184490-8kh8gb7gnvu51sc50d99oar0qlj7ldlb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "biz.eastservices.suara",
+            "certificate_hash": "7ccbb8fc59de417bc8f1e0409caff9a0e5c0d27d"
+          }
+        },
+        {
+          "client_id": "287740184490-74jd21l3hdbsngppaq7neiracp7n43vd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8_HJLMiixyeVKezoce79dfeLJqh3lNXA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "287740184490-r58668k7qbgnj8gpcqbj9h9odpop69jg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287740184490:android:c629c9377b5a2ebb",
+        "android_client_info": {
+          "package_name": "biz.eastservices.suarabiz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "287740184490-74jd21l3hdbsngppaq7neiracp7n43vd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8_HJLMiixyeVKezoce79dfeLJqh3lNXA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
