@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:suarabiz/screens/admin_screen.dart';
+import 'package:suarabiz/screens/sales_screen.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -84,6 +85,8 @@ class _LoginState extends State<Login> {
                               onPressed: () {
                                 if(_emailTextController.text == 'admin' && _passwordTextController.text == '123'){
                                   Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=>Admin()));
+                                }else if(_emailTextController.text =='sales' && _passwordTextController.text == '123'){
+                                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=>Sales()));
                                 }
                               },
                             ),
