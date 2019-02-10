@@ -4,6 +4,7 @@ class SalesAgent{
   String password;
   int credits;
   String name;
+  String role;
 
   SalesAgent(this.id,this.name,this.email,this.password,this.credits);
 
@@ -12,6 +13,7 @@ class SalesAgent{
     email = f['email'];
     credits = f['credits'];
     name = f['name'];
+    role = f['role'];
   }
 
   toJson(){
@@ -19,7 +21,8 @@ class SalesAgent{
       'id':id,
       'email':email,
       'credits':credits,
-      'name':name
+      'name':name,
+      'role':role
     };
   }
 }
