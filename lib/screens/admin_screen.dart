@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:suarabiz/models/sales_agent.dart';
 import 'package:suarabiz/screens/admin_screens/add_new_agent.dart';
+import 'package:suarabiz/screens/login_screen.dart';
 
 class Admin extends StatefulWidget {
   @override
@@ -17,6 +19,12 @@ class _AdminState extends State<Admin> {
   void initState() {
     super.initState();
     getSalesAgents();
+  }
+
+  void signOut() {
+    FirebaseAuth.instance.signOut();
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (context) => Login()));
   }
 
   @override
@@ -38,6 +46,23 @@ class _AdminState extends State<Admin> {
         ),
         appBar: AppBar(
           title: Text('Admin'),
+          actions: <Widget>[
+            PopupMenuButton(
+              onSelected: (val) {
+                switch (val) {
+                  case 'signout':
+                    signOut();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                    PopupMenuItem(
+                      child: Text('Sign out'),
+                      value: 'signout',
+                    )
+                  ],
+            )
+          ],
         ),
         body: _isLoading
             ? Center(
