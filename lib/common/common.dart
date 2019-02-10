@@ -8,3 +8,6 @@ SnackBar buildErrorIndicatorSnackBar(String content) => SnackBar(
       content: Text(content),
       backgroundColor: Colors.red,
     );
+
+
+final String giveCreditsText = 'Give credits';
