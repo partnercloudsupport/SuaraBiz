@@ -1,7 +1,8 @@
 import 'package:suarabiz/common/common.dart';
 
-class VendorSettings{
+class VendorSettings {
   String uid;
+  String email;
   String businessName;
   String businessDesc;
   String fbURL;
@@ -17,16 +18,16 @@ class VendorSettings{
   bool creditPolicy;
   DateTime lastOnline;
 
-  
-  VendorSettings(this.uid){
+  VendorSettings(this.uid, this.email) {
     isLoc1Def = true;
     isOnline = false;
     creditPolicy = false;
     lastOnline = DateTime.now();
   }
 
-  VendorSettings.fromJson(dynamic f){
+  VendorSettings.fromJson(dynamic f) {
     uid = f['uid'];
+    email = f['email'];
     businessName = f['businessName'];
     businessDesc = f['businessDesc'];
     fbURL = f['fbURL'];
