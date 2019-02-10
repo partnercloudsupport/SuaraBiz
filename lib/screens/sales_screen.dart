@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:suarabiz/models/vendor_settings.dart';
 import 'package:suarabiz/screens/login_screen.dart';
+import 'package:suarabiz/common/common.dart';
 
 class Sales extends StatefulWidget {
   @override
@@ -15,6 +16,7 @@ class _SalesState extends State<Sales> {
   var _isEmptyResults = false;
   var _vendorsList = List<VendorSettings>();
   final TextEditingController _vendorEmailController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey();
 
   void getVendorsByEmail(String email) async {
     var searchResults = await Firestore.instance
@@ -103,6 +105,73 @@ class _SalesState extends State<Sales> {
                   children: _vendorsList
                       .map((vendor) => ListTile(
                             title: Text(vendor.businessName),
+                            subtitle: Text(vendor.email),
+                            trailing: PopupMenuButton(
+                              onSelected: (val) {
+                                switch (val) {
+                                  case 'credit':
+                                    showDialog(
+                                        context: context,
+                                        barrierDismissible: true,
+                                        builder: (context) => AlertDialog(
+                                              shape: BeveledRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          5.0)),
+                                              title: Text(
+                                                  '${vendor.credits} remaining'),
+                                              content: Form(
+                                                key: _formKey,
+                                                child: TextFormField(
+                                                  keyboardType: TextInputType
+                                                      .numberWithOptions(
+                                                          decimal: false,
+                                                          signed: false),
+                                                  onSaved: (val) {
+                                                    vendor.credits +=
+                                                        int.parse(val);
+                                                  },
+                                                  validator: (val) {
+                                                    if (val.isEmpty) {
+                                                      return 'Cannot be empty';
+                                                    }
+                                                  },
+                                                  autofocus: true,
+                                                ),
+                                              ),
+                                              actions: <Widget>[
+                                                FlatButton(
+                                                  child: Text('DONE'),
+                                                  onPressed: () {
+                                                    if (_formKey.currentState
+                                                        .validate()) {
+                                                      _formKey.currentState
+                                                          .save();
+                                                      Firestore.instance
+                                                          .collection(
+                                                              'vendorsettings')
+                                                          .document(vendor.uid)
+                                                          .updateData({
+                                                        'credits':
+                                                            vendor.credits
+                                                      });
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    }
+                                                  },
+                                                )
+                                              ],
+                                            ));
+                                    break;
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      child: Text(giveCreditsText),
+                                      value: 'credit',
+                                    )
+                                  ],
+                            ),
                           ))
                       .toList(),
                 ),
