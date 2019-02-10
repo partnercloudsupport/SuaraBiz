@@ -12,35 +12,42 @@ class Sales extends StatefulWidget {
 class _SalesState extends State<Sales> {
   var _isInitialVisit = true;
   var _isLoading = false;
+  var _isEmptyResults = false;
   var _vendorsList = List<VendorSettings>();
   final TextEditingController _vendorEmailController = TextEditingController();
 
   void getVendorsByEmail(String email) async {
-    Firestore.instance
+    var searchResults = await Firestore.instance
         .collection('vendorsettings')
-        .where('businessName', arrayContains: email)
-        .snapshots()
-        .listen((data) {
-      if (data.documents.length > 0) {
-        print('has documents of length ${data.documents.length}');
-        var tempVendorsList = List<VendorSettings>();
-        for (int i = 0; i < data.documents.length; i++) {
-          tempVendorsList.add(VendorSettings.fromJson(data.documents[i]));
-        }
+        .where('email', isEqualTo: email)
+        .getDocuments();
 
-        setState(() {
-          _vendorsList = tempVendorsList;
-          _isLoading = false;
-        });
-      } else {
-        print('no documents');
+    if (searchResults.documents.length > 0) {
+      print('has documents of length ${searchResults.documents.length}');
+      var tempVendorsList = List<VendorSettings>();
+      for (int i = 0; i < searchResults.documents.length; i++) {
+        tempVendorsList
+            .add(VendorSettings.fromJson(searchResults.documents[i]));
       }
-    }).cancel();
+
+      setState(() {
+        _vendorsList = tempVendorsList;
+        _isLoading = false;
+      });
+    } else {
+      print('no documents');
+      setState(() {
+        _isLoading = false;
+        _isInitialVisit = true;
+        _isEmptyResults = true;
+      });
+    }
   }
 
-  void signOut(){
+  void signOut() {
     FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=>Login()));
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (context) => Login()));
   }
 
   @override
@@ -68,12 +75,19 @@ class _SalesState extends State<Sales> {
         ),
         actions: <Widget>[
           PopupMenuButton(
-            onSelected: (val){
-              switch (val){
-                case 'signout': signOut();break;
+            onSelected: (val) {
+              switch (val) {
+                case 'signout':
+                  signOut();
+                  break;
               }
             },
-            itemBuilder: (context)=>[PopupMenuItem(value: 'signout',child: Text('Sign out'),)],
+            itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'signout',
+                    child: Text('Sign out'),
+                  )
+                ],
           )
         ],
       ),
