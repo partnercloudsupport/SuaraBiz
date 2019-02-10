@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:suarabiz/common/common.dart';
 import 'package:suarabiz/models/sales_agent.dart';
 import 'package:suarabiz/screens/admin_screen.dart';
 import 'package:suarabiz/screens/sales_screen.dart';

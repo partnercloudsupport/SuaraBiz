@@ -13,7 +13,6 @@ class Sales extends StatefulWidget {
 class _SalesState extends State<Sales> {
   var _isInitialVisit = true;
   var _isLoading = false;
-  var _isEmptyResults = false;
   var _vendorsList = List<VendorSettings>();
   final TextEditingController _vendorEmailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey();
@@ -41,7 +40,6 @@ class _SalesState extends State<Sales> {
       setState(() {
         _isLoading = false;
         _isInitialVisit = true;
-        _isEmptyResults = true;
       });
     }
   }
