@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:suarabiz/common/common.dart';
+import 'package:suarabiz/models/sales_agent.dart';
 import 'package:suarabiz/screens/admin_screen.dart';
 import 'package:suarabiz/screens/sales_screen.dart';
 
@@ -8,13 +12,17 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  TextEditingController _emailTextController = new TextEditingController(text: 'sales');
-  TextEditingController _passwordTextController = new TextEditingController(text: '123');
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  final TextEditingController _emailTextController =
+      new TextEditingController(text: 'sales');
+  final TextEditingController _passwordTextController =
+      new TextEditingController(text: '123');
   bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('Login'),
       ),
@@ -48,26 +56,26 @@ class _LoginState extends State<Login> {
                 ),
                 _isLoading
                     ? Align(
-                      alignment: Alignment.center,
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 40.0),
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Row(
-                            children: <Widget>[
-                              SizedBox(
-                                height: 20.0,
-                                width: 20.0,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.0,
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 40.0),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Row(
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 20.0,
+                                  width: 20.0,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.0,
+                                  ),
                                 ),
-                              ),
-                              Text('Please wait...')
-                            ],
+                                Text('Please wait...')
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    )
+                      )
                     : Container(),
                 Expanded(
                   child: Center(
@@ -82,11 +90,40 @@ class _LoginState extends State<Login> {
                                 'Login',
                                 style: TextStyle(color: Colors.white),
                               ),
-                              onPressed: () {
-                                if(_emailTextController.text == 'admin' && _passwordTextController.text == '123'){
-                                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=>Admin()));
-                                }else if(_emailTextController.text =='sales' && _passwordTextController.text == '123'){
-                                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=>Sales()));
+                              onPressed: () async {
+                                try {
+                                  //get the user id first
+                                  var loggedInUser = await FirebaseAuth.instance
+                                      .signInWithEmailAndPassword(
+                                          email: _emailTextController.text,
+                                          password:
+                                              _passwordTextController.text);
+
+                                  //get the user role second
+                                  var userSnapshot = await Firestore.instance
+                                      .collection('salesagents')
+                                      .document(loggedInUser.uid)
+                                      .get();
+                                  if (userSnapshot.data != null) {
+                                    SalesAgent loggedInAgent =
+                                        SalesAgent.fromJson(userSnapshot.data);
+                                    Widget toRoute;
+                                    if (loggedInAgent.role == 'sales') {
+                                      toRoute = Sales();
+                                    } else {
+                                      toRoute = Admin();
+                                    }
+
+                                    Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                            builder: (context) => toRoute));
+                                  }
+                                } catch (error) {
+                                  _scaffoldKey.currentState
+                                      .showSnackBar(SnackBar(
+                                    content: Text(error.message),
+                                    backgroundColor: Colors.red,
+                                  ));
                                 }
                               },
                             ),
