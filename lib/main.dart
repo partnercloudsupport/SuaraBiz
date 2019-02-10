@@ -1,5 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:suarabiz/models/sales_agent.dart';
+import 'package:suarabiz/screens/admin_screen.dart';
 import 'package:suarabiz/screens/login_screen.dart';
+import 'package:suarabiz/screens/sales_screen.dart';
 
 void main() => runApp(SuaraBizApp());
 
@@ -7,12 +12,52 @@ class SuaraBizApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      home: Login() //MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+        ),
+        home: /*Login()*/ FutureBuilder(
+          future: FirebaseAuth.instance.currentUser(),
+          builder: (context, snapShot) {
+            if (snapShot.hasData) {
+              String loggedInUserId = snapShot.data.uid;
+              return FutureBuilder(
+                future: Firestore.instance.collection('salesagents').document(loggedInUserId).get(),
+                builder: (context,snapShot){
+                  SalesAgent loggedInAgent = SalesAgent.fromJson(snapShot.data);
+                  Widget screenToRender;
+                  if(loggedInAgent.role == 'sales'){
+                    screenToRender = Sales();
+                  }else{
+                    screenToRender = Admin();
+                  }
+                  return screenToRender;
+                },
+              );
+              //get the user role second
+              /*Firestore.instance
+                  .collection('salesagents')
+                  .document(loggedInUserId)
+                  .snapshots()
+                  .listen((data) {
+                SalesAgent loggedInAgent =
+                    SalesAgent.fromJson(data.data);
+                Widget toRoute;
+                if (loggedInAgent.role == 'sales') {
+                  toRoute = Sales();
+                } else {
+                  toRoute = Admin();
+                }
+
+                return toRoute;
+              })*//*.cancel()*/;
+
+              //return Sales();
+            }
+            return Login();
+          },
+        ) //MyHomePage(title: 'Flutter Demo Home Page'),
+        );
   }
 }
 
@@ -58,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: Icon(Icons.add),
-      ), 
+      ),
     );
   }
 }
