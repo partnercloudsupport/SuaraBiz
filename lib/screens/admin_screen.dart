@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:suarabiz/common/common.dart';
 import 'package:suarabiz/models/sales_agent.dart';
 import 'package:suarabiz/screens/admin_screens/add_new_agent.dart';
+import 'package:suarabiz/screens/admin_screens/settings.dart';
 import 'package:suarabiz/screens/login_screen.dart';
 
 class Admin extends StatefulWidget {
@@ -26,6 +27,11 @@ class _AdminState extends State<Admin> {
     FirebaseAuth.instance.signOut();
     Navigator.of(context)
         .pushReplacement(MaterialPageRoute(builder: (context) => Login()));
+  }
+
+  void navigateToSettingsPage() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => AdminSettings()));
   }
 
   @override
@@ -55,12 +61,20 @@ class _AdminState extends State<Admin> {
             PopupMenuButton(
               onSelected: (val) {
                 switch (val) {
+                  case 'settings':
+                    navigateToSettingsPage();
+                    break;
+
                   case 'signout':
                     signOut();
                     break;
                 }
               },
               itemBuilder: (context) => [
+                    PopupMenuItem(
+                      child: Text('Settings'),
+                      value: 'settings',
+                    ),
                     PopupMenuItem(
                       child: Text('Sign out'),
                       value: 'signout',
