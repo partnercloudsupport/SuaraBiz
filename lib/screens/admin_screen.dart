@@ -47,6 +47,10 @@ class _AdminState extends State<Admin> {
         ),
         appBar: AppBar(
           title: Text('Admin'),
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(20),
+            child: TextField(),
+          ),
           actions: <Widget>[
             PopupMenuButton(
               onSelected: (val) {
@@ -91,7 +95,7 @@ class _AdminState extends State<Admin> {
                                               key: _formKey,
                                               child: TextFormField(
                                                 onSaved: (val) {
-                                                  agent.credits =
+                                                  agent.credits +=
                                                       int.parse(val);
                                                 },
                                                 validator: (val) {
