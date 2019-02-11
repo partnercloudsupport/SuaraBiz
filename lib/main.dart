@@ -5,6 +5,7 @@ import 'package:suarabiz/models/sales_agent.dart';
 import 'package:suarabiz/screens/admin_screen.dart';
 import 'package:suarabiz/screens/login_screen.dart';
 import 'package:suarabiz/screens/sales_screen.dart';
+import 'package:suarabiz/screens/splash_screen.dart';
 
 void main() => runApp(SuaraBizApp());
 
@@ -22,22 +23,29 @@ class SuaraBizApp extends StatelessWidget {
             if (snapShot.hasData) {
               String loggedInUserId = snapShot.data.uid;
               return FutureBuilder(
-                future: Firestore.instance.collection('salesagents').document(loggedInUserId).get(),
-                builder: (context,snapShot){
-                  SalesAgent loggedInAgent = SalesAgent.fromJson(snapShot.data);
-                  Widget screenToRender;
-                  if(loggedInAgent.role == 'sales'){
-                    screenToRender = Sales();
-                  }else{
-                    screenToRender = Admin();
+                future: Firestore.instance
+                    .collection('salesagents')
+                    .document(loggedInUserId)
+                    .get(),
+                builder: (context, snapShot) {
+                  if (snapShot.hasData) {
+                    SalesAgent loggedInAgent =
+                        SalesAgent.fromJson(snapShot.data);
+                    Widget screenToRender;
+                    if (loggedInAgent.role == 'sales') {
+                      screenToRender = Sales();
+                    } else {
+                      screenToRender = Admin();
+                    }
+                    return screenToRender;
+                  } else {
+                    return SplashScreen();
                   }
-                  return screenToRender;
                 },
               );
             }
             return Login();
           },
-        )
-        );
+        ));
   }
 }
