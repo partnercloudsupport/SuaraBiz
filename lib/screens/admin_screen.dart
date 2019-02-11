@@ -53,11 +53,13 @@ class _AdminState extends State<Admin> {
         ),
         appBar: AppBar(
           title: Text('Admin'),
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(20),
-            child: TextField(),
-          ),
           actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () {
+                showSearch(context: context, delegate: DataSearch(_salesAgents));
+              },
+            ),
             PopupMenuButton(
               onSelected: (val) {
                 switch (val) {
@@ -198,5 +200,62 @@ class _AdminState extends State<Admin> {
       });
       subscription.cancel();
     });
+  }
+}
+
+class DataSearch extends SearchDelegate<String> {
+  /*final _suggestionList = ['sajad', 'jaward', 'ahamed'];*/
+  final List<SalesAgent> _listOfSalesAgents;
+  DataSearch(this._listOfSalesAgents); /*{
+    Firestore.instance
+        .collection('salesagents')
+        .getDocuments()
+        .then((documents) {
+      if (documents.documents.length > 0) {
+        for (int i = 0; i < documents.documents.length; i++) {
+          _listOfSalesAgents
+              .add(SalesAgent.fromJson(documents.documents[i].data));
+        }
+      }
+    });
+  }*/
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        IconButton(
+          icon: Icon(Icons.clear),
+          onPressed: () {
+            query = '';
+          },
+        )
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        icon: AnimatedIcon(
+          icon: AnimatedIcons.menu_arrow,
+          progress: transitionAnimation,
+        ),
+        onPressed: () {
+          close(context, null);
+        },
+      );
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return null;
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestionList = _listOfSalesAgents.where((agent)=>agent.email.contains(query)).toList();
+
+    return ListView.builder(
+      itemBuilder: (context, index) => ListTile(
+            leading: Icon(Icons.location_city),
+            title: Text(suggestionList[index].email),
+          ),
+      itemCount: suggestionList.length,
+    );
   }
 }
