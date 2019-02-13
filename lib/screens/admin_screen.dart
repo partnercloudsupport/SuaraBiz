@@ -57,7 +57,8 @@ class _AdminState extends State<Admin> {
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
-                showSearch(context: context, delegate: DataSearch(_salesAgents));
+                showSearch(
+                    context: context, delegate: DataSearch(_salesAgents));
               },
             ),
             PopupMenuButton(
@@ -206,19 +207,7 @@ class _AdminState extends State<Admin> {
 class DataSearch extends SearchDelegate<String> {
   /*final _suggestionList = ['sajad', 'jaward', 'ahamed'];*/
   final List<SalesAgent> _listOfSalesAgents;
-  DataSearch(this._listOfSalesAgents); /*{
-    Firestore.instance
-        .collection('salesagents')
-        .getDocuments()
-        .then((documents) {
-      if (documents.documents.length > 0) {
-        for (int i = 0; i < documents.documents.length; i++) {
-          _listOfSalesAgents
-              .add(SalesAgent.fromJson(documents.documents[i].data));
-        }
-      }
-    });
-  }*/
+  DataSearch(this._listOfSalesAgents);
 
   @override
   List<Widget> buildActions(BuildContext context) => [
@@ -248,12 +237,80 @@ class DataSearch extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestionList = _listOfSalesAgents.where((agent)=>agent.email.contains(query)).toList();
+    final GlobalKey<FormState> _formKey = GlobalKey();
+    final suggestionList = _listOfSalesAgents
+        .where((agent) => agent.email.contains(query))
+        .toList();
 
     return ListView.builder(
       itemBuilder: (context, index) => ListTile(
             leading: Icon(Icons.location_city),
-            title: Text(suggestionList[index].email),
+            title: Text(suggestionList[index].name),
+            subtitle: Text(suggestionList[index].email),
+            trailing: PopupMenuButton(
+              onSelected: (val) {
+                switch (val) {
+                  case 'credit':
+                    showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (context) {
+                          final SalesAgent agent = suggestionList[index];
+
+                          return AlertDialog(
+                            shape: BeveledRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0)),
+                            title: Text('${agent.credits} credits remaining'),
+                            content: Form(
+                              key: _formKey,
+                              child: TextFormField(
+                                onSaved: (val) {
+                                  agent.credits += int.parse(val);
+                                },
+                                validator: (val) {
+                                  if (val.isEmpty) {
+                                    return 'Cannot be empty';
+                                  }
+                                },
+                                autofocus: true,
+                                keyboardType: TextInputType.numberWithOptions(
+                                    decimal: false, signed: false),
+                                decoration:
+                                    InputDecoration(hintText: 'credits amount'),
+                              ),
+                            ),
+                            actions: <Widget>[
+                              FlatButton(
+                                child: Text('DONE'),
+                                onPressed: () {
+                                  if (_formKey.currentState.validate()) {
+                                    _formKey.currentState.save();
+                                    Firestore.instance
+                                        .collection('salesagents')
+                                        .document(agent.id)
+                                        .updateData({'credits': agent.credits});
+                                    Navigator.of(context).pop();
+                                  }
+                                },
+                              )
+                            ],
+                          );
+                        });
+                }
+              },
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    child: Text(giveCreditsText),
+                    value: 'credit',
+                  ),
+                  PopupMenuItem(
+                    child: Text('View details'),
+                    value: 'detail',
+                  )
+                ];
+              },
+            ),
           ),
       itemCount: suggestionList.length,
     );
