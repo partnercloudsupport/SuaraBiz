@@ -13,9 +13,9 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   final TextEditingController _emailTextController =
-      new TextEditingController(text: 'sales');
+      new TextEditingController();
   final TextEditingController _passwordTextController =
-      new TextEditingController(text: '123');
+      new TextEditingController();
   bool _isLoading = false;
 
   @override
