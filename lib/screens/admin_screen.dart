@@ -244,7 +244,6 @@ class DataSearch extends SearchDelegate<String> {
 
     return ListView.builder(
       itemBuilder: (context, index) => ListTile(
-            leading: Icon(Icons.location_city),
             title: Text(suggestionList[index].name),
             subtitle: Text(suggestionList[index].email),
             trailing: PopupMenuButton(
