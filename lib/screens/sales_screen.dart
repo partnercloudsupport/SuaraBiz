@@ -29,8 +29,10 @@ class _SalesState extends State<Sales> {
   }
 
   void getVendors() async {
-    var vendorsList =
-        await Firestore.instance.collection('vendorsettings').getDocuments();
+    var vendorsList = await Firestore.instance
+        .collection('vendorsettings')
+        .where('creditPolicy', isEqualTo: true)
+        .getDocuments();
     if (vendorsList.documents.length > 0) {
       for (int i = 0; i < vendorsList.documents.length; i++) {
         var vendor = VendorSettings.fromJson(vendorsList.documents[i].data);
@@ -38,6 +40,10 @@ class _SalesState extends State<Sales> {
           _vendorsList.add(vendor);
         });
       }
+    } else {
+      setState(() {
+        _vendorsList = [];
+      });
     }
   }
 
