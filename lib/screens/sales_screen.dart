@@ -1,11 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:suarabiz/models/sales_agent.dart';
 import 'package:suarabiz/models/vendor_settings.dart';
 import 'package:suarabiz/screens/login_screen.dart';
 import 'package:suarabiz/common/common.dart';
 
 class Sales extends StatefulWidget {
+  final SalesAgent _salesAgent;
+
+  Sales(this._salesAgent);
+
   @override
   State<StatefulWidget> createState() => _SalesState();
 }
@@ -15,6 +20,7 @@ class _SalesState extends State<Sales> {
   var _vendorsList = List<VendorSettings>();
   final TextEditingController _vendorEmailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey();
+  int creditTypedByAgent = 0;
 
   @override
   void initState() {
@@ -41,6 +47,12 @@ class _SalesState extends State<Sales> {
         .pushReplacement(MaterialPageRoute(builder: (context) => Login()));
   }
 
+  Future<void> refreshListView() {
+    _vendorsList = [];
+    getVendors();
+    return Future.value();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,7 +62,9 @@ class _SalesState extends State<Sales> {
           IconButton(
             icon: Icon(Icons.search),
             onPressed: () {
-              showSearch(context: context, delegate: DataSearch(_vendorsList));
+              showSearch(
+                  context: context,
+                  delegate: DataSearch(_vendorsList, widget._salesAgent));
             },
           ),
           PopupMenuButton(
@@ -74,83 +88,132 @@ class _SalesState extends State<Sales> {
           ? Center(
               child: CircularProgressIndicator(),
             )
-          : ListView(
-              children: _vendorsList
-                  .map((vendor) => ListTile(
-                        title: Text(vendor.businessName),
-                        subtitle: Text(vendor.email),
-                        trailing: PopupMenuButton(
-                          onSelected: (val) {
-                            switch (val) {
-                              case 'credit':
-                                showDialog(
-                                    context: context,
-                                    barrierDismissible: true,
-                                    builder: (context) => AlertDialog(
-                                          shape: BeveledRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(5.0)),
-                                          title: Text(
-                                              '${vendor.credits} remaining'),
-                                          content: Form(
-                                            key: _formKey,
-                                            child: TextFormField(
-                                              keyboardType: TextInputType
-                                                  .numberWithOptions(
-                                                      decimal: false,
-                                                      signed: false),
-                                              onSaved: (val) {
-                                                vendor.credits +=
-                                                    int.parse(val);
-                                              },
-                                              validator: (val) {
-                                                if (val.isEmpty) {
-                                                  return 'Cannot be empty';
-                                                }
-                                              },
-                                              autofocus: true,
+          : RefreshIndicator(
+              onRefresh: refreshListView,
+              child: ListView(
+                children: _vendorsList
+                    .map((vendor) => ListTile(
+                          title: Text(vendor.businessName),
+                          subtitle: Text(vendor.email),
+                          trailing: PopupMenuButton(
+                            onSelected: (val) {
+                              switch (val) {
+                                case 'credit':
+                                  showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (context) => AlertDialog(
+                                            shape: BeveledRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(5.0)),
+                                            title: Flex(
+                                              direction: Axis.horizontal,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: <Widget>[
+                                                remainingCreditsWidget(
+                                                    vendor.credits,
+                                                    'Vendor has'),
+                                                remainingCreditsWidget(
+                                                    widget._salesAgent.credits,
+                                                    'You have'),
+                                              ],
                                             ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('DONE'),
-                                              onPressed: () {
-                                                if (_formKey.currentState
-                                                    .validate()) {
-                                                  _formKey.currentState.save();
-                                                  Firestore.instance
-                                                      .collection(
-                                                          'vendorsettings')
-                                                      .document(vendor.uid)
-                                                      .updateData({
-                                                    'credits': vendor.credits
-                                                  });
-                                                  Navigator.of(context).pop();
-                                                }
-                                              },
-                                            )
-                                          ],
-                                        ));
-                                break;
-                            }
-                          },
-                          itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  child: Text(giveCreditsText),
-                                  value: 'credit',
-                                )
-                              ],
-                        ),
-                      ))
-                  .toList(),
+                                            content: Form(
+                                              key: _formKey,
+                                              child: TextFormField(
+                                                keyboardType: TextInputType
+                                                    .numberWithOptions(
+                                                        decimal: false,
+                                                        signed: false),
+                                                onSaved: (val) {
+                                                  creditTypedByAgent =
+                                                      int.parse(val);
+                                                  vendor.credits +=
+                                                      int.parse(val);
+                                                },
+                                                validator: (val) {
+                                                  if (val.isEmpty) {
+                                                    return 'Cannot be empty';
+                                                  }
+
+                                                  if (int.parse(val) < 0 ||
+                                                      int.parse(val) == 0) {
+                                                    return 'Please enter a valid amount';
+                                                  }
+
+                                                  if (int.parse(val) >
+                                                      widget._salesAgent
+                                                          .credits) {
+                                                    return 'Cannot give more than credits you got';
+                                                  }
+                                                },
+                                                autofocus: true,
+                                              ),
+                                            ),
+                                            actions: <Widget>[
+                                              FlatButton(
+                                                child: Text('DONE'),
+                                                onPressed: () {
+                                                  if (_formKey.currentState
+                                                      .validate()) {
+                                                    _formKey.currentState
+                                                        .save();
+                                                    //create db refs
+                                                    final Firestore fIns =
+                                                        Firestore.instance;
+                                                    var agentRef = fIns
+                                                        .collection(
+                                                            'salesagents')
+                                                        .document(widget
+                                                            ._salesAgent.id);
+                                                    var venderRef = fIns
+                                                        .collection(
+                                                            'vendorsettings')
+                                                        .document(vendor.uid);
+
+                                                    widget._salesAgent
+                                                            .credits -=
+                                                        creditTypedByAgent;
+
+                                                    agentRef.updateData({
+                                                      'credits': (widget
+                                                          ._salesAgent.credits)
+                                                    });
+                                                    venderRef.updateData({
+                                                      'credits': vendor.credits
+                                                    });
+
+                                                    Navigator.of(context).pop();
+                                                  }
+                                                },
+                                              )
+                                            ],
+                                          ));
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    child: Text(giveCreditsText),
+                                    value: 'credit',
+                                  )
+                                ],
+                          ),
+                        ))
+                    .toList(),
+              ),
             ),
     );
   }
 }
 
 class DataSearch extends SearchDelegate<String> {
+  final SalesAgent _salesAgent;
   final List<VendorSettings> _vendorsList;
-  DataSearch(this._vendorsList);
+  DataSearch(this._vendorsList, this._salesAgent);
+  int creditTypedByAgent = 0;
 
   @override
   List<Widget> buildActions(BuildContext context) => [
@@ -199,16 +262,35 @@ class DataSearch extends SearchDelegate<String> {
                           return AlertDialog(
                             shape: BeveledRectangleBorder(
                                 borderRadius: BorderRadius.circular(5.0)),
-                            title: Text('${vendor.credits} credits remaining'),
+                            title: Flex(
+                              direction: Axis.horizontal,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                remainingCreditsWidget(
+                                    vendor.credits, 'Vendor has'),
+                                remainingCreditsWidget(
+                                    _salesAgent.credits, 'You have'),
+                              ],
+                            ),
                             content: Form(
                               key: _formKey,
                               child: TextFormField(
                                 onSaved: (val) {
+                                  creditTypedByAgent = int.parse(val);
                                   vendor.credits += int.parse(val);
                                 },
                                 validator: (val) {
                                   if (val.isEmpty) {
                                     return 'Cannot be empty';
+                                  }
+
+                                  if (int.parse(val) < 0 ||
+                                      int.parse(val) == 0) {
+                                    return 'Please enter a valid amount';
+                                  }
+
+                                  if (int.parse(val) > _salesAgent.credits) {
+                                    return 'Cannot give more than credits you got';
                                   }
                                 },
                                 autofocus: true,
@@ -221,14 +303,25 @@ class DataSearch extends SearchDelegate<String> {
                             actions: <Widget>[
                               FlatButton(
                                 child: Text('DONE'),
-                                onPressed: () {
+                                onPressed: () async {
                                   if (_formKey.currentState.validate()) {
                                     _formKey.currentState.save();
-                                    Firestore.instance
+                                    //create db refs
+                                    final Firestore fIns = Firestore.instance;
+                                    var agentRef = fIns
+                                        .collection('salesagents')
+                                        .document(_salesAgent.id);
+                                    var venderRef = fIns
                                         .collection('vendorsettings')
-                                        .document(vendor.uid)
-                                        .updateData(
-                                            {'credits': vendor.credits});
+                                        .document(vendor.uid);
+
+                                    _salesAgent.credits -= creditTypedByAgent;
+
+                                    agentRef.updateData(
+                                        {'credits': (_salesAgent.credits)});
+                                    venderRef.updateData(
+                                        {'credits': vendor.credits});
+
                                     Navigator.of(context).pop();
                                   }
                                 },
