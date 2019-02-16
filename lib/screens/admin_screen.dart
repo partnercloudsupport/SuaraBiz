@@ -435,7 +435,6 @@ class DataSearchForVendors extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final GlobalKey<FormState> _formKey = GlobalKey();
     final suggestionList = _listOfvendors
         .where((agent) => agent.email.contains(query))
         .toList();
