@@ -33,7 +33,7 @@ class SuaraBizApp extends StatelessWidget {
                         SalesAgent.fromJson(snapShot.data);
                     Widget screenToRender;
                     if (loggedInAgent.role == 'sales') {
-                      screenToRender = Sales();
+                      screenToRender = Sales(loggedInAgent);
                     } else {
                       screenToRender = Admin();
                     }
