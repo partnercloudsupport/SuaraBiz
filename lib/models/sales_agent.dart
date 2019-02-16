@@ -6,6 +6,10 @@ class SalesAgent{
   String name;
   String role;
 
+  SalesAgent.emptyObject(){
+    role='sales';
+  }
+
   SalesAgent(this.id,this.name,this.email,this.password,this.credits);
 
   SalesAgent.fromJson(dynamic f){
