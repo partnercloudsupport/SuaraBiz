@@ -198,10 +198,10 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
                                         child: Text(giveCreditsText),
                                         value: 'credit',
                                       ),
-                                      PopupMenuItem(
+                                      /*PopupMenuItem(
                                         child: Text('View details'),
                                         value: 'detail',
-                                      )
+                                      )*/
                                     ];
                                   },
                                 ),
