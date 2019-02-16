@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:suarabiz/common/common.dart';
+import 'package:suarabiz/common/creditPolicyAlertBox.dart';
 import 'package:suarabiz/models/sales_agent.dart';
+import 'package:suarabiz/models/vendor_settings.dart';
 import 'package:suarabiz/screens/admin_screens/add_new_agent.dart';
 import 'package:suarabiz/screens/admin_screens/settings.dart';
 import 'package:suarabiz/screens/login_screen.dart';
@@ -12,15 +14,27 @@ class Admin extends StatefulWidget {
   State<StatefulWidget> createState() => _AdminState();
 }
 
-class _AdminState extends State<Admin> {
+class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey();
   final List<SalesAgent> _salesAgents = [];
+  final List<VendorSettings> _vendors = [];
   bool _isLoading = false;
+  TabController _tabController;
+  bool _shouldShowFloatingActionButton = true;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, initialIndex: 0, vsync: this);
+    _tabController.addListener(handleTabChanging);
     getSalesAgents();
+    getVendors();
+  }
+
+  void handleTabChanging() {
+    setState(() {
+      _shouldShowFloatingActionButton = _tabController.index == 0;
+    });
   }
 
   void signOut() {
@@ -36,138 +50,197 @@ class _AdminState extends State<Admin> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            var addedAgent = await Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => AddNewAgent(), fullscreenDialog: true));
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+          floatingActionButton: _shouldShowFloatingActionButton
+              ? FloatingActionButton(
+                  onPressed: () async {
+                    var addedAgent = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => AddNewAgent(),
+                            fullscreenDialog: true));
 
-            if (addedAgent != null) {
-              setState(() {
-                _salesAgents.add(addedAgent);
-              });
-            }
-          },
-          child: Icon(Icons.add),
-          tooltip: 'Add new user',
-        ),
-        appBar: AppBar(
-          title: Text('Admin'),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.search),
-              onPressed: () {
-                showSearch(
-                    context: context, delegate: DataSearch(_salesAgents));
-              },
+                    if (addedAgent != null) {
+                      setState(() {
+                        _salesAgents.add(addedAgent);
+                      });
+                    }
+                  },
+                  child: Icon(Icons.add),
+                  tooltip: 'Add new user',
+                )
+              : null,
+          appBar: AppBar(
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: <Widget>[
+                Tab(
+                  text: 'SALES AGENTS',
+                ),
+                Tab(
+                  text: 'VENDORS',
+                ),
+              ],
             ),
-            PopupMenuButton(
-              onSelected: (val) {
-                switch (val) {
-                  case 'settings':
-                    navigateToSettingsPage();
-                    break;
+            title: Text('Admin'),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  showSearch(
+                      context: context, delegate: DataSearch(_salesAgents));
+                },
+              ),
+              PopupMenuButton(
+                onSelected: (val) {
+                  switch (val) {
+                    case 'settings':
+                      navigateToSettingsPage();
+                      break;
 
-                  case 'signout':
-                    signOut();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                    PopupMenuItem(
-                      child: Text('Settings'),
-                      value: 'settings',
+                    case 'signout':
+                      signOut();
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: Text('Settings'),
+                        value: 'settings',
+                      ),
+                      PopupMenuItem(
+                        child: Text('Sign out'),
+                        value: 'signout',
+                      )
+                    ],
+              )
+            ],
+          ),
+          body: _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: <Widget>[
+                    ListView(
+                      children: _salesAgents
+                          .map((agent) => ListTile(
+                                title: Text(agent.name),
+                                subtitle: Text(agent.email),
+                                trailing: PopupMenuButton(
+                                  onSelected: (val) {
+                                    switch (val) {
+                                      case 'credit':
+                                        showDialog(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            builder: (context) => AlertDialog(
+                                                  shape: BeveledRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5.0)),
+                                                  title: Text(
+                                                      '${agent.credits} credits remaining'),
+                                                  content: Form(
+                                                    key: _formKey,
+                                                    child: TextFormField(
+                                                      onSaved: (val) {
+                                                        agent.credits +=
+                                                            int.parse(val);
+                                                      },
+                                                      validator: (val) {
+                                                        if (val.isEmpty) {
+                                                          return 'Cannot be empty';
+                                                        }
+                                                      },
+                                                      autofocus: true,
+                                                      keyboardType: TextInputType
+                                                          .numberWithOptions(
+                                                              decimal: false,
+                                                              signed: false),
+                                                      decoration: InputDecoration(
+                                                          hintText:
+                                                              'credits amount'),
+                                                    ),
+                                                  ),
+                                                  actions: <Widget>[
+                                                    FlatButton(
+                                                      child: Text('DONE'),
+                                                      onPressed: () {
+                                                        if (_formKey
+                                                            .currentState
+                                                            .validate()) {
+                                                          _formKey.currentState
+                                                              .save();
+                                                          Firestore.instance
+                                                              .collection(
+                                                                  'salesagents')
+                                                              .document(
+                                                                  agent.id)
+                                                              .updateData({
+                                                            'credits':
+                                                                agent.credits
+                                                          });
+                                                          Navigator.of(context)
+                                                              .pop();
+                                                        }
+                                                      },
+                                                    )
+                                                  ],
+                                                ));
+                                    }
+                                  },
+                                  itemBuilder: (context) {
+                                    return [
+                                      PopupMenuItem(
+                                        child: Text(giveCreditsText),
+                                        value: 'credit',
+                                      ),
+                                      PopupMenuItem(
+                                        child: Text('View details'),
+                                        value: 'detail',
+                                      )
+                                    ];
+                                  },
+                                ),
+                              ))
+                          .toList(),
                     ),
-                    PopupMenuItem(
-                      child: Text('Sign out'),
-                      value: 'signout',
+
+                    //vendors
+                    ListView(
+                      children: _vendors
+                          .map((vendor) => ListTile(
+                                title: Text(vendor.businessName),
+                                subtitle: Text(vendor.email),
+                                trailing: PopupMenuButton(
+                                  onSelected: (val) {
+                                    switch (val) {
+                                      case 'creditpolicy':
+                                        showDialog(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            builder: (context) =>
+                                                CreditPolicyAlertBox(vendor));
+                                    }
+                                  },
+                                  itemBuilder: (context) {
+                                    return [
+                                      PopupMenuItem(
+                                        child: Text(changeCreditPolicy),
+                                        value: 'creditpolicy',
+                                      ),
+                                    ];
+                                  },
+                                ),
+                              ))
+                          .toList(),
                     )
                   ],
-            )
-          ],
-        ),
-        body: _isLoading
-            ? Center(
-                child: CircularProgressIndicator(),
-              )
-            : ListView(
-                children: _salesAgents
-                    .map((agent) => ListTile(
-                          title: Text(agent.name),
-                          subtitle: Text(agent.email),
-                          trailing: PopupMenuButton(
-                            onSelected: (val) {
-                              switch (val) {
-                                case 'credit':
-                                  showDialog(
-                                      context: context,
-                                      barrierDismissible: true,
-                                      builder: (context) => AlertDialog(
-                                            shape: BeveledRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5.0)),
-                                            title: Text(
-                                                '${agent.credits} credits remaining'),
-                                            content: Form(
-                                              key: _formKey,
-                                              child: TextFormField(
-                                                onSaved: (val) {
-                                                  agent.credits +=
-                                                      int.parse(val);
-                                                },
-                                                validator: (val) {
-                                                  if (val.isEmpty) {
-                                                    return 'Cannot be empty';
-                                                  }
-                                                },
-                                                autofocus: true,
-                                                keyboardType: TextInputType
-                                                    .numberWithOptions(
-                                                        decimal: false,
-                                                        signed: false),
-                                                decoration: InputDecoration(
-                                                    hintText: 'credits amount'),
-                                              ),
-                                            ),
-                                            actions: <Widget>[
-                                              FlatButton(
-                                                child: Text('DONE'),
-                                                onPressed: () {
-                                                  if (_formKey.currentState
-                                                      .validate()) {
-                                                    _formKey.currentState
-                                                        .save();
-                                                    Firestore.instance
-                                                        .collection(
-                                                            'salesagents')
-                                                        .document(agent.id)
-                                                        .updateData({
-                                                      'credits': agent.credits
-                                                    });
-                                                    Navigator.of(context).pop();
-                                                  }
-                                                },
-                                              )
-                                            ],
-                                          ));
-                              }
-                            },
-                            itemBuilder: (context) {
-                              return [
-                                PopupMenuItem(
-                                  child: Text(giveCreditsText),
-                                  value: 'credit',
-                                ),
-                                PopupMenuItem(
-                                  child: Text('View details'),
-                                  value: 'detail',
-                                )
-                              ];
-                            },
-                          ),
-                        ))
-                    .toList(),
-              ));
+                )),
+    );
   }
 
   void getSalesAgents() {
@@ -202,6 +275,22 @@ class _AdminState extends State<Admin> {
       subscription.cancel();
     });
   }
+
+  void getVendors() async {
+    /*setState(() {
+      _isLoading = true;
+    });*/
+
+    var vendorsList =
+        await Firestore.instance.collection('vendorsettings').getDocuments();
+
+    for (int i = 0; i < vendorsList.documents.length; i++) {
+      var vendor = VendorSettings.fromJson(vendorsList.documents[i].data);
+      setState(() {
+        _vendors.add(vendor);
+      });
+    }
+  }
 }
 
 class DataSearch extends SearchDelegate<String> {
@@ -231,7 +320,7 @@ class DataSearch extends SearchDelegate<String> {
       );
 
   @override
-  Widget buildResults(BuildContext context) =>buildSuggestions(context);
+  Widget buildResults(BuildContext context) => buildSuggestions(context);
 
   @override
   Widget buildSuggestions(BuildContext context) {
