@@ -18,7 +18,6 @@ class Sales extends StatefulWidget {
 class _SalesState extends State<Sales> {
   var _isLoading = false;
   var _vendorsList = List<VendorSettings>();
-  final TextEditingController _vendorEmailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey();
   int creditTypedByAgent = 0;
 
