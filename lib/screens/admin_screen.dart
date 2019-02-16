@@ -89,7 +89,7 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
                 icon: Icon(Icons.search),
                 onPressed: () {
                   showSearch(
-                      context: context, delegate: DataSearch(_salesAgents));
+                      context: context, delegate: _tabController.index == 0 ? DataSearchForSalesAgents(_salesAgents) : DataSearchForVendors(_vendors));
                 },
               ),
               PopupMenuButton(
@@ -293,10 +293,10 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
   }
 }
 
-class DataSearch extends SearchDelegate<String> {
+class DataSearchForSalesAgents extends SearchDelegate<String> {
   /*final _suggestionList = ['sajad', 'jaward', 'ahamed'];*/
   final List<SalesAgent> _listOfSalesAgents;
-  DataSearch(this._listOfSalesAgents);
+  DataSearchForSalesAgents(this._listOfSalesAgents);
 
   @override
   List<Widget> buildActions(BuildContext context) => [
@@ -393,6 +393,76 @@ class DataSearch extends SearchDelegate<String> {
                   PopupMenuItem(
                     child: Text('View details'),
                     value: 'detail',
+                  )
+                ];
+              },
+            ),
+          ),
+      itemCount: suggestionList.length,
+    );
+  }
+}
+
+
+
+class DataSearchForVendors extends SearchDelegate<String> {
+  final List<VendorSettings> _listOfvendors;
+  DataSearchForVendors(this._listOfvendors);
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        IconButton(
+          icon: Icon(Icons.clear),
+          onPressed: () {
+            query = '';
+          },
+        )
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        icon: AnimatedIcon(
+          icon: AnimatedIcons.menu_arrow,
+          progress: transitionAnimation,
+        ),
+        onPressed: () {
+          close(context, null);
+        },
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => buildSuggestions(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final GlobalKey<FormState> _formKey = GlobalKey();
+    final suggestionList = _listOfvendors
+        .where((agent) => agent.email.contains(query))
+        .toList();
+
+    return ListView.builder(
+      itemBuilder: (context, index) => ListTile(
+            title: Text(suggestionList[index].businessName),
+            subtitle: Text(suggestionList[index].email),
+            trailing: PopupMenuButton(
+              onSelected: (val) {
+                switch (val) {
+                  case 'creditpolicy':
+                    showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (context) {
+                          final VendorSettings vendor = suggestionList[index];
+
+                          return CreditPolicyAlertBox(vendor);
+                        });
+                }
+              },
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    child: Text(changeCreditPolicy),
+                    value: 'creditpolicy',
                   )
                 ];
               },
