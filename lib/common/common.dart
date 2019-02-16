@@ -10,6 +10,7 @@ SnackBar buildErrorIndicatorSnackBar(String content) => SnackBar(
     );
 
 final String giveCreditsText = 'Give credits';
+final String changeCreditPolicy = 'Change credit policy';
 
 Widget remainingCreditsWidget(int remainingCreditAmount, String text) =>
     Container(
@@ -26,7 +27,9 @@ Widget remainingCreditsWidget(int remainingCreditAmount, String text) =>
               radius: 30.0,
               child: Text('$remainingCreditAmount'),
             ),
-            Padding(padding: EdgeInsets.only(top: 10.0),),
+            Padding(
+              padding: EdgeInsets.only(top: 10.0),
+            ),
             Text(
               text,
               style: TextStyle(fontSize: 15.0),
