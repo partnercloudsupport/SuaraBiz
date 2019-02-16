@@ -44,6 +44,7 @@ class _LoginState extends State<Login> {
                 ),
                 TextField(
                   controller: _emailTextController,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                       labelText: 'Email', prefixIcon: Icon(Icons.email)),
                 ),
@@ -108,7 +109,7 @@ class _LoginState extends State<Login> {
                                         SalesAgent.fromJson(userSnapshot.data);
                                     Widget toRoute;
                                     if (loggedInAgent.role == 'sales') {
-                                      toRoute = Sales();
+                                      toRoute = Sales(loggedInAgent);
                                     } else {
                                       toRoute = Admin();
                                     }
