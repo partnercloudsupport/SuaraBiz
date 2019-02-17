@@ -18,7 +18,8 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey();
   final List<SalesAgent> _salesAgents = [];
   final List<VendorSettings> _vendors = [];
-  bool _isLoading = false;
+  bool _isAgentsLoading = false;
+  bool _isVendorsLoading = false;
   TabController _tabController;
   bool _shouldShowFloatingActionButton = true;
 
@@ -120,135 +121,149 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
               )
             ],
           ),
-          body: _isLoading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : TabBarView(
-                  controller: _tabController,
-                  children: <Widget>[
-                    ListView(
-                      children: _salesAgents
-                          .map((agent) => ListTile(
-                                title: Text(agent.name),
-                                subtitle: Text(agent.email),
-                                trailing: PopupMenuButton(
-                                  onSelected: (val) {
-                                    switch (val) {
-                                      case 'credit':
-                                        showDialog(
-                                            context: context,
-                                            barrierDismissible: true,
-                                            builder: (context) => AlertDialog(
-                                                  shape: BeveledRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5.0)),
-                                                  title: Text(
-                                                      '${agent.credits} credits remaining'),
-                                                  content: Form(
-                                                    key: _formKey,
-                                                    child: TextFormField(
-                                                      onSaved: (val) {
-                                                        agent.credits +=
-                                                            int.parse(val);
-                                                      },
-                                                      validator: (val) {
-                                                        if (val.isEmpty) {
-                                                          return 'Cannot be empty';
-                                                        }
-                                                      },
-                                                      autofocus: true,
-                                                      keyboardType: TextInputType
-                                                          .numberWithOptions(
-                                                              decimal: false,
-                                                              signed: false),
-                                                      decoration: InputDecoration(
-                                                          hintText:
-                                                              'credits amount'),
+          body: TabBarView(
+            controller: _tabController,
+            children: <Widget>[
+              _isAgentsLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: getSalesAgents,
+                      child: ListView(
+                        children: _salesAgents
+                            .map((agent) => ListTile(
+                                  title: Text(agent.name),
+                                  subtitle: Text(agent.email),
+                                  trailing: PopupMenuButton(
+                                    onSelected: (val) {
+                                      switch (val) {
+                                        case 'credit':
+                                          showDialog(
+                                              context: context,
+                                              barrierDismissible: true,
+                                              builder: (context) => AlertDialog(
+                                                    shape:
+                                                        BeveledRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5.0)),
+                                                    title: Text(
+                                                        '${agent.credits} credits remaining'),
+                                                    content: Form(
+                                                      key: _formKey,
+                                                      child: TextFormField(
+                                                        onSaved: (val) {
+                                                          agent.credits +=
+                                                              int.parse(val);
+                                                        },
+                                                        validator: (val) {
+                                                          if (val.isEmpty) {
+                                                            return 'Cannot be empty';
+                                                          }
+                                                        },
+                                                        autofocus: true,
+                                                        keyboardType: TextInputType
+                                                            .numberWithOptions(
+                                                                decimal: false,
+                                                                signed: false),
+                                                        decoration: InputDecoration(
+                                                            hintText:
+                                                                'credits amount'),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  actions: <Widget>[
-                                                    FlatButton(
-                                                      child: Text('DONE'),
-                                                      onPressed: () {
-                                                        if (_formKey
-                                                            .currentState
-                                                            .validate()) {
-                                                          _formKey.currentState
-                                                              .save();
-                                                          Firestore.instance
-                                                              .collection(
-                                                                  'salesagents')
-                                                              .document(
-                                                                  agent.id)
-                                                              .updateData({
-                                                            'credits':
-                                                                agent.credits
-                                                          });
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                        }
-                                                      },
-                                                    )
-                                                  ],
-                                                ));
-                                    }
-                                  },
-                                  itemBuilder: (context) {
-                                    return [
-                                      PopupMenuItem(
-                                        child: Text(giveCreditsText),
-                                        value: 'credit',
-                                      ),
-                                      /*PopupMenuItem(
+                                                    actions: <Widget>[
+                                                      FlatButton(
+                                                        child: Text('DONE'),
+                                                        onPressed: () {
+                                                          if (_formKey
+                                                              .currentState
+                                                              .validate()) {
+                                                            _formKey
+                                                                .currentState
+                                                                .save();
+                                                            Firestore.instance
+                                                                .collection(
+                                                                    'salesagents')
+                                                                .document(
+                                                                    agent.id)
+                                                                .updateData({
+                                                              'credits':
+                                                                  agent.credits
+                                                            });
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          }
+                                                        },
+                                                      )
+                                                    ],
+                                                  ));
+                                      }
+                                    },
+                                    itemBuilder: (context) {
+                                      return [
+                                        PopupMenuItem(
+                                          child: Text(giveCreditsText),
+                                          value: 'credit',
+                                        ),
+                                        /*PopupMenuItem(
                                         child: Text('View details'),
                                         value: 'detail',
                                       )*/
-                                    ];
-                                  },
-                                ),
-                              ))
-                          .toList(),
+                                      ];
+                                    },
+                                  ),
+                                ))
+                            .toList(),
+                      ),
                     ),
 
-                    //vendors
-                    ListView(
-                      children: _vendors
-                          .map((vendor) => ListTile(
-                                title: Text(vendor.businessName),
-                                subtitle: Text(vendor.email),
-                                trailing: PopupMenuButton(
-                                  onSelected: (val) {
-                                    switch (val) {
-                                      case 'creditpolicy':
-                                        showDialog(
-                                            context: context,
-                                            barrierDismissible: true,
-                                            builder: (context) =>
-                                                CreditPolicyAlertBox(vendor));
-                                    }
-                                  },
-                                  itemBuilder: (context) {
-                                    return [
-                                      PopupMenuItem(
-                                        child: Text(changeCreditPolicy),
-                                        value: 'creditpolicy',
-                                      ),
-                                    ];
-                                  },
-                                ),
-                              ))
-                          .toList(),
+              //vendors
+              _isVendorsLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
                     )
-                  ],
-                )),
+                  : RefreshIndicator(
+                      onRefresh: getVendors,
+                      child: ListView(
+                        children: _vendors
+                            .map((vendor) => ListTile(
+                                  title: Text(vendor.businessName),
+                                  subtitle: Text(vendor.email),
+                                  trailing: PopupMenuButton(
+                                    onSelected: (val) {
+                                      switch (val) {
+                                        case 'creditpolicy':
+                                          showDialog(
+                                              context: context,
+                                              barrierDismissible: true,
+                                              builder: (context) =>
+                                                  CreditPolicyAlertBox(vendor));
+                                      }
+                                    },
+                                    itemBuilder: (context) {
+                                      return [
+                                        PopupMenuItem(
+                                          child: Text(changeCreditPolicy),
+                                          value: 'creditpolicy',
+                                        ),
+                                      ];
+                                    },
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    )
+            ],
+          )),
     );
   }
 
-  void getSalesAgents() async {
+  Future<void> getSalesAgents() async {
     setState(() {
-      _isLoading = true;
+      _isAgentsLoading = true;
     });
 
     var agents = await Firestore.instance
@@ -265,24 +280,29 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
     }
 
     setState(() {
-      _isLoading = false;
+      _isAgentsLoading = false;
     });
   }
 
-  void getVendors() async {
-    /*setState(() {
-      _isLoading = true;
-    });*/
+  Future<void> getVendors() async {
+    setState(() {
+      _isVendorsLoading = true;
+    });
 
     var vendorsList =
         await Firestore.instance.collection('vendorsettings').getDocuments();
 
+    _vendors.clear();
     for (int i = 0; i < vendorsList.documents.length; i++) {
       var vendor = VendorSettings.fromJson(vendorsList.documents[i].data);
       setState(() {
         _vendors.add(vendor);
       });
     }
+
+    setState(() {
+      _isVendorsLoading = false;
+    });
   }
 }
 
