@@ -89,7 +89,10 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
                 icon: Icon(Icons.search),
                 onPressed: () {
                   showSearch(
-                      context: context, delegate: _tabController.index == 0 ? DataSearchForSalesAgents(_salesAgents) : DataSearchForVendors(_vendors));
+                      context: context,
+                      delegate: _tabController.index == 0
+                          ? DataSearchForSalesAgents(_salesAgents)
+                          : DataSearchForVendors(_vendors));
                 },
               ),
               PopupMenuButton(
@@ -243,36 +246,26 @@ class _AdminState extends State<Admin> with SingleTickerProviderStateMixin {
     );
   }
 
-  void getSalesAgents() {
+  void getSalesAgents() async {
     setState(() {
       _isLoading = true;
     });
 
-    var subscription = Firestore.instance
+    var agents = await Firestore.instance
         .collection('salesagents')
-        .snapshots()
-        .listen((data) {});
+        .where('role', isEqualTo: 'sales')
+        .getDocuments();
 
-    subscription.onData((data) {
-      if (data.documents.length > 0) {
-        for (int i = 0; i < data.documents.length; i++) {
-          var agent = SalesAgent.fromJson(data.documents[i].data);
-          setState(() {
-            _salesAgents.add(agent);
-          });
-        }
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      subscription.cancel();
-    });
-
-    subscription.onError((error) {
+    _salesAgents.clear();
+    for (int i = 0; i < agents.documents.length; i++) {
+      var agent = SalesAgent.fromJson(agents.documents[i].data);
       setState(() {
-        _isLoading = false;
+        _salesAgents.add(agent);
       });
-      subscription.cancel();
+    }
+
+    setState(() {
+      _isLoading = false;
     });
   }
 
@@ -403,8 +396,6 @@ class DataSearchForSalesAgents extends SearchDelegate<String> {
   }
 }
 
-
-
 class DataSearchForVendors extends SearchDelegate<String> {
   final List<VendorSettings> _listOfvendors;
   DataSearchForVendors(this._listOfvendors);
@@ -435,9 +426,8 @@ class DataSearchForVendors extends SearchDelegate<String> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestionList = _listOfvendors
-        .where((agent) => agent.email.contains(query))
-        .toList();
+    final suggestionList =
+        _listOfvendors.where((agent) => agent.email.contains(query)).toList();
 
     return ListView.builder(
       itemBuilder: (context, index) => ListTile(
