@@ -53,6 +53,15 @@ class _AdminSettingsState extends State<AdminSettings> {
                 });
               },
             ),
+          ),
+          ListTile(
+            title: Text('Remove location nodes'),
+            subtitle: Text('This will affect all the vendors'),
+            trailing: RaisedButton(
+              onPressed: (){},
+              color: Colors.red,
+              child: Text('REMOVE',style: TextStyle(color: Colors.white),),
+            ),
           )
         ],
       ),
