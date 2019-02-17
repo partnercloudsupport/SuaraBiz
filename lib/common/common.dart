@@ -50,12 +50,14 @@ AlertDialog locationRemovalConfirmationDialog(BuildContext context) =>
             style: TextStyle(color: Colors.grey),
           ),
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(false);
           },
         ),
         FlatButton(
           child: Text('REMOVE'),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.of(context).pop(true);
+          },
         ),
       ],
     );
