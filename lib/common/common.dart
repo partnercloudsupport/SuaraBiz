@@ -38,3 +38,24 @@ Widget remainingCreditsWidget(int remainingCreditAmount, String text) =>
         ),
       ),
     );
+
+AlertDialog locationRemovalConfirmationDialog(BuildContext context) =>
+    AlertDialog(
+      title: Text('Are you sure?'),
+      content: Text('This process cannot be undone'),
+      actions: <Widget>[
+        FlatButton(
+          child: Text(
+            'CANCEL',
+            style: TextStyle(color: Colors.grey),
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        FlatButton(
+          child: Text('REMOVE'),
+          onPressed: () {},
+        ),
+      ],
+    );
